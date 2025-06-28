@@ -10,9 +10,8 @@ export enum UserRole {
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
   @Column({ unique: true })
   email: string;
 
@@ -29,6 +28,6 @@ export class User {
   @Column({ default: false })
   isOtpVerified: boolean;
 
-  @Column({ nullable: true })
-  groupId: number; // for Admin/Power User/User grouping
+  @Column({ type: 'uuid', nullable: true })
+  groupId: string;
 }
