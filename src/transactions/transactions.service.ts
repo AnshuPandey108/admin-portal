@@ -3,7 +3,7 @@ import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { Repository } from 'typeorm';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { CreateTransactionDto, UpdateTransactionDto } from './dto/create-transaction.dto';
 import { User, UserRole } from '../users/entities/user.entity';
 
 @Injectable()
@@ -75,14 +75,14 @@ export class TransactionsService {
     async getOneById(id: string, user: User): Promise<Transaction> {
         const tx = await this.txRepo.findOne({
             where: { id },
-            relations: ['user'], 
+            relations: ['user'],
         });
 
         if (!tx) throw new NotFoundException('Transaction not found');
 
-        
+
         if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.SUPPORT) {
-            return tx; 
+            return tx;
         }
 
         if (user.role === UserRole.ADMIN || user.role === UserRole.POWER_USER) {
@@ -95,6 +95,17 @@ export class TransactionsService {
         }
 
         throw new ForbiddenException('Not allowed to view this transaction');
+    }
+
+    async updateTransaction(id: string, dto: UpdateTransactionDto, user: User): Promise<Transaction> {
+        const tx = await this.txRepo.findOne({ where: { id } });
+        if (!tx) throw new NotFoundException('Transaction not found');
+        if (user.role !== UserRole.USER || tx.userId !== user.id) {
+            throw new ForbiddenException('You can only update your own transactions');
+        }
+
+        Object.assign(tx, dto);
+        return await this.txRepo.save(tx);
     }
 
 
