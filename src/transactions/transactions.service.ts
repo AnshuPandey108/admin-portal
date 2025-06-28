@@ -1,5 +1,5 @@
 // src/transactions/transactions.service.ts
-import { Injectable, ForbiddenException,NotFoundException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { Repository } from 'typeorm';
@@ -70,6 +70,33 @@ export class TransactionsService {
 
         throw new ForbiddenException('You are not allowed to delete this transaction');
     }
+
+
+    async getOneById(id: string, user: User): Promise<Transaction> {
+        const tx = await this.txRepo.findOne({
+            where: { id },
+            relations: ['user'], 
+        });
+
+        if (!tx) throw new NotFoundException('Transaction not found');
+
+        
+        if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.SUPPORT) {
+            return tx; 
+        }
+
+        if (user.role === UserRole.ADMIN || user.role === UserRole.POWER_USER) {
+            if (tx.groupId !== user.groupId) throw new ForbiddenException('Not allowed');
+            return tx;
+        }
+
+        if (user.role === UserRole.USER && tx.userId === user.id) {
+            return tx;
+        }
+
+        throw new ForbiddenException('Not allowed to view this transaction');
+    }
+
 
 
 }

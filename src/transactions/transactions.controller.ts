@@ -1,5 +1,5 @@
 // src/transactions/transactions.controller.ts
-import { Controller, Post, Body, UseGuards, Request, Get,Delete,Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Get, Delete, Param } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -34,6 +34,18 @@ export class TransactionsController {
     @Roles(UserRole.USER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
     async delete(@Param('id') id: string, @Request() req) {
         return this.txService.deleteTransaction(id, req.user);
+    }
+
+    @Get(':id')
+    @Roles(
+        UserRole.USER,
+        UserRole.POWER_USER,
+        UserRole.ADMIN,
+        UserRole.SUPPORT,
+        UserRole.SUPER_ADMIN
+    )
+    async findOne(@Param('id') id: string, @Request() req) {
+        return this.txService.getOneById(id, req.user);
     }
 
 }

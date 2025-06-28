@@ -52,4 +52,11 @@ export class UsersController {
     async deleteUser(@Request() req, @Param('id') id: string) {
         return this.usersService.deleteUserByRoleAware(id, req.user);
     }
+
+    @Get(':id')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.POWER_USER, UserRole.SUPPORT)
+    async getOneUser(@Param('id') id: string, @Request() req) {
+        return this.usersService.getOneVisibleUser(id, req.user);
+    }
+
 }

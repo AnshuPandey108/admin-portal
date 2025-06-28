@@ -149,4 +149,40 @@ export class UsersService {
         throw new ForbiddenException('You are not allowed to delete this user');
     }
 
+
+    async getOneVisibleUser(id: string, currentUser: User): Promise<User> {
+        const user = await this.userRepo.findOne({
+            where: { id },
+            relations: ['group'], // optional, only if you want group data
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        // 🔐 Access Control
+        if (currentUser.role === UserRole.SUPER_ADMIN || currentUser.role === UserRole.SUPPORT) {
+            return user;
+        }
+
+        if (
+            currentUser.role === UserRole.ADMIN &&
+            user.groupId === currentUser.groupId &&
+            [UserRole.POWER_USER, UserRole.USER].includes(user.role)
+        ) {
+            return user;
+        }
+
+        if (
+            currentUser.role === UserRole.POWER_USER &&
+            user.groupId === currentUser.groupId &&
+            user.role === UserRole.USER
+        ) {
+            return user;
+        }
+
+        throw new ForbiddenException('Not allowed to view this user');
+    }
+
+
 }
