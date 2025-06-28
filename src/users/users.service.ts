@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from './entities/user.entity';
 import { Otp } from '../auth/entities/otp.entity';
 import { MailService } from '../mail/mail.service';
+import { In } from 'typeorm';
 
 @Injectable()
 export class UsersService {
@@ -38,15 +39,13 @@ export class UsersService {
         }
 
         // 2) Decide groupId and allowed roles
-        let assignedGroupId: string;
+        let assignedGroupId: any;
         if (creator.role === UserRole.SUPER_ADMIN) {
             // SuperAdmin can create ANY role, but must pass groupId
             if (roleToAssign === UserRole.SUPPORT) {
-                assignedGroupId = '';
+                assignedGroupId = null;
             }
             else {
-
-
                 if (!groupIdFromBody) {
                     throw new BadRequestException('Group ID is required for Super Admin');
                 }
@@ -93,6 +92,61 @@ export class UsersService {
         );
 
         return { message: `OTP link sent to ${email}` };
+    }
+
+    async getVisibleUsers(user: User): Promise<User[]> {
+        if (user.role === UserRole.SUPER_ADMIN || user.role === UserRole.SUPPORT) {
+            return this.userRepo.find({
+                relations: ['group'],
+            });
+        }
+
+        if (user.role === UserRole.ADMIN) {
+            return this.userRepo.find({
+                where: {
+                    groupId: user.groupId,
+                    role: In([UserRole.POWER_USER, UserRole.USER]),
+                },
+                relations: ['group'], // JOIN with group
+            });
+        }
+
+        if (user.role === UserRole.POWER_USER) {
+            return this.userRepo.find({
+                where: {
+                    groupId: user.groupId,
+                    role: UserRole.USER,
+                },
+                relations: ['group'], // JOIN with group
+            });
+        }
+
+        throw new ForbiddenException('Not authorized to view users');
+    }
+
+
+    async deleteUserByRoleAware(id: string, requester: User): Promise<{ message: string }> {
+        const targetUser = await this.userRepo.findOne({ where: { id } });
+
+        if (!targetUser) throw new NotFoundException('User not found');
+
+        // Super Admin: can delete anyone
+        if (requester.role === UserRole.SUPER_ADMIN) {
+            await this.userRepo.delete(id);
+            return { message: 'User deleted' };
+        }
+
+        // Admin: can delete user/power_user in same group
+        if (
+            requester.role === UserRole.ADMIN &&
+            [UserRole.USER, UserRole.POWER_USER].includes(targetUser.role) &&
+            targetUser.groupId === requester.groupId
+        ) {
+            await this.userRepo.delete(id);
+            return { message: 'User deleted by Admin' };
+        }
+
+        throw new ForbiddenException('You are not allowed to delete this user');
     }
 
 }

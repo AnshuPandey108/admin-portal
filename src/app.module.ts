@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { MailService } from './mail/mail.service';
 import { MailModule } from './mail/mail.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import { MailModule } from './mail/mail.module';
    UsersModule,
    AuthModule,
    GroupsModule,
-   MailModule
+   MailModule,
+   TransactionsModule
 
     // We'll build this module next
   ],

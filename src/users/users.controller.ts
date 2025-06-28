@@ -2,7 +2,10 @@
 import {
     Controller,
     Post,
+    Delete,
     Body,
+    Get,
+    Param,
     Request,
     UseGuards,
     BadRequestException,
@@ -10,9 +13,11 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsersService } from './users.service';
 import { UserRole } from './entities/user.entity';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
@@ -35,5 +40,16 @@ export class UsersController {
             body.groupId,
             creator
         );
+    }
+
+    @Get()
+    @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.POWER_USER, UserRole.SUPPORT)
+    async getUsers(@Request() req) {
+        return this.usersService.getVisibleUsers(req.user);
+    }
+    @Delete(':id')
+    @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+    async deleteUser(@Request() req, @Param('id') id: string) {
+        return this.usersService.deleteUserByRoleAware(id, req.user);
     }
 }

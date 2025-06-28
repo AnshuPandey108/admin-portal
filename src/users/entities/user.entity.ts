@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column ,ManyToOne,JoinColumn } from 'typeorm';
+import { Group } from '../../groups/entities/group.entity'; // Import Group entity
 
 export enum UserRole {
   SUPER_ADMIN = 'super_admin',
@@ -30,4 +31,8 @@ export class User {
 
   @Column({ type: 'uuid', nullable: true })
   groupId: string;
+
+   @ManyToOne(() => Group, { nullable: true, eager: false }) 
+  @JoinColumn({ name: 'groupId' })
+  group?: Group; 
 }
