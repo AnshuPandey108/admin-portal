@@ -11,7 +11,7 @@ describe('TransactionsService', () => {
   let service: TransactionsService;
   let repo: jest.Mocked<Repository<Transaction>>;
 
-  const mockTx = { id: 'tx1', title: 'Test', userId: 'u1', groupId: 'g1', createdAt: new Date() } as Transaction;
+  const mockTx = { id: 'tx1', title: 'Test', userId: 'u1', groupId: 'g1', cdt: new Date() , ldt: new Date() } as Transaction;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({

@@ -12,6 +12,8 @@ describe('GroupsController', () => {
   const mockGroup: Group = {
     id: 'uuid-1',
     name: 'Engineering',
+    cdt: new Date(),
+    ldt: new Date(),
   };
 
   const mockGroupsService = {

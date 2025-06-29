@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column ,ManyToOne,JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, DeleteDateColumn } from 'typeorm';
 import { Group } from '../../groups/entities/group.entity'; // Import Group entity
 
 export enum UserRole {
@@ -32,7 +32,12 @@ export class User {
   @Column({ type: 'uuid', nullable: true })
   groupId: string;
 
-   @ManyToOne(() => Group, { nullable: true, eager: false }) 
+  @CreateDateColumn({ name: 'cdt', type: 'timestamp with time zone' })
+  cdt: Date;
+  @DeleteDateColumn({ name: 'ldt', type: 'timestamp with time zone' })
+  ldt: Date; // soft deleted at
+  @ManyToOne(() => Group, { nullable: true, eager: false })
   @JoinColumn({ name: 'groupId' })
-  group?: Group; 
+  group?: Group;
+
 }
